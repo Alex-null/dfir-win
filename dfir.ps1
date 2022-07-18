@@ -115,7 +115,7 @@ Get-NetTCPConnection | select LocalAddress,localport,remoteaddress,remoteport,st
 # 获取进程
 ####################################################################
 #System Idle Process、 System进程以外出现没有命令行的进程可能是当前执行权限不够
-Write-Host -ForegroundColor Yellow "[+]  Collecting running process"
+#Write-Host -ForegroundColor Yellow "[+]  Collecting running process"
 gwmi win32_process | Select Name, ProcessID, @{n='Owner';e={$_.GetOwner().User}},CommandLine | ft -wrap -autosize > $CurrentPath\process.txt
 ####################################################################
 # 获取命名管道
@@ -126,7 +126,7 @@ Write-Host -ForegroundColor Yellow "[+]  Collecting pipe"
 # 获取服务 
 ####################################################################
 Write-Host -ForegroundColor Yellow "[+]  Collecting service"
-gwmi win32_service | ft -Property  Name, DisplayName, PathName, User, State -Wrap | sort Name  > $CurrentPath\Service.txt
+gwmi win32_service | ft -Property  Name, DisplayName, PathName, User, State > $CurrentPath\Service.txt
 ####################################################################
 # 获取计划任务
 ####################################################################
@@ -136,7 +136,7 @@ schtasks /query /fo LIST /v |ft > $CurrentPath\task.txt
 # 获取注册表（当前用户）
 ####################################################################
 Write-Host -ForegroundColor Yellow "[+]  Collecting Registry For Current User"
-(Gci -Path HCKU:\ -recurse) |ft -wrap -autosize > $CurrentPath\Registry.txt
+(Gci -Path HKCU:\ -recurse) |ft -wrap -autosize > $CurrentPath\Registry.txt
 ####################################################################
 # 获取WMI信息
 ####################################################################
@@ -173,6 +173,8 @@ $Pasts = @($Users);
 foreach ($Past in $Pasts) {
 	write-host "`n----User Pwsh History Path $Past---`n" -ForegroundColor Magenta; 
 	get-content $Past
+  copy $Past $CurrentPath\
+  Add-Content -Path $CurrentPath\ConsoleHost_history.txt  -value "`r`n$Past"
 }
 
 ####################################################################
@@ -234,3 +236,5 @@ gci "C:\Users\*" -Recurse  | ft >> file.txt
 gci -path "C:\Users\*" -Recurse | Get-FileHash | ft hash, path -autosize > users_hash.txt
 gci -path "C:\windows\temp" -Recurse  | ft >> file.txt
 gci -path "C:\windows\temp" -Recurse | Get-FileHash | ft hash, path -autosize > temp_hash.txt
+#仅win10
+reg query "HKLM\SYSTEM\CurrentControlSet\Services\bam\state\UserSettings" /s > bam.txt
